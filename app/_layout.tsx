@@ -1,59 +1,59 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+import AuthenticationScreen from './authentication';
+import AddProductScreen from './add-product';
+import HomeScreen from './home';
+import Category from './category';
 
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
+const Stack = createNativeStackNavigator(); 
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+const Layout = () => {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
-  });
+    useEffect(() => {
+        const checkToken = async () => {
+            const token = await AsyncStorage.getItem('token');
+            setIsAuthenticated(!!token);
+        };
+        checkToken();
+    }, []);
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
-  return <RootLayoutNav />;
+    return (
+        <Stack.Navigator
+            screenOptions={{
+                headerShown: false
+            }}
+        >
+            {!isAuthenticated && (
+                <Stack.Screen 
+                    name='authentication' 
+                    component={AuthenticationScreen} 
+                    options={{headerShown: false}} 
+                />
+            )}
+            <Stack.Screen 
+                name='home' 
+                component={HomeScreen} 
+                options={{headerShown: false}} 
+            />
+            <Stack.Screen 
+                name='view-category-all-products' 
+                component={Category} 
+                options={{headerShown: false}} 
+            />
+            <Stack.Screen 
+                name='add-product' 
+                component={AddProductScreen} 
+                options={{headerShown: false}} 
+            /> 
+        </Stack.Navigator>
+    );
 }
 
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+const styles = StyleSheet.create({})
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
-  );
-}
+export default Layout;
