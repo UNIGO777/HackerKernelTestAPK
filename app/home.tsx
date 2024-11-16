@@ -12,6 +12,7 @@ import { deleteProduct as deleteProductFuction } from '../constants/fuctions';
 
 const Home = () => {
     const [products, setProducts] = useState([]);
+    const [isInitialized, setIsInitialized] = useState(false);
     const navigation = useNavigation();
     const handleLogout = () => {
         
@@ -20,25 +21,23 @@ const Home = () => {
        })
     }
     useEffect(() => {
-        const checkProduct = async () => {
+        const initializeProducts = async () => {
             const product = await AsyncStorage.getItem('product');
 
             if (!product) {
-                AsyncStorage.setItem('product', JSON.stringify(productsArr));
-                setProducts(productsArr as never[]);
+                await AsyncStorage.setItem('product', JSON.stringify(productsArr));
+                setProducts(productsArr);
+            } else {
+                setProducts(JSON.parse(product));
             }
+            setIsInitialized(true);
         }
-        checkProduct();
-        AsyncStorage.getItem('product').then((res) => {
-            setProducts(JSON.parse(res || '[]'));
-        })
+        initializeProducts();
     }, [])
 
     const deleteProduct = (id: number) => {
         deleteProductFuction(id, products, setProducts);
     }
-
-    
 
     const renderListShowcase = ({ item }: { item: any }) => (
         <ListShowcase products={item.products} deleteProduct={deleteProduct} type={item.type} />
@@ -58,12 +57,14 @@ const Home = () => {
                 <Text style={styles.subtitle}>Audio shop on Rustaveli Ave 57.</Text>
                 <Text style={styles.description}>This shop offers both products and services</Text>
             </View>
-            <FlatList
-                data={data}
-                renderItem={renderListShowcase}
-                keyExtractor={(item) => item.type}
-                style={styles.listContainer}
+            {isInitialized && (
+                <FlatList
+                    data={data}
+                    renderItem={renderListShowcase}
+                    keyExtractor={(item) => item.type}
+                    style={styles.listContainer}
                 />
+            )}
             </View>
         </ScreenWrapper>
             <TouchableOpacity style={styles.addIconContainer} onPress={() => navigation.navigate('add-product' as never)}>

@@ -18,9 +18,6 @@ const Index = () => {
             const token = await AsyncStorage.getItem('token');
             const currentRoute = navigation?.getState()?.routes[navigation?.getState()?.index]?.name;
             setToken(token || '');
-            
-
-            
         };
 
         checkToken();
